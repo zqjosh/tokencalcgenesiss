@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Growth Calculator</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 118, 117, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(99, 102, 241, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            z-index: -1;
+            animation: backgroundShift 20s ease-in-out infinite;
+        }
+        
+        @keyframes backgroundShift {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(45deg); }
+        }
+        
+        .container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .calculator-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            animation: cardFloat 6s ease-in-out infinite;
+        }
+        
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .calculator-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            background: linear-gradient(45deg, 
+                rgba(99, 102, 241, 0.5),
+                rgba(139, 92, 246, 0.5),
+                rgba(236, 72, 153, 0.5),
+                rgba(99, 102, 241, 0.5));
+            border-radius: 24px;
+            z-index: -1;
+            opacity: 0;
+            animation: borderGlow 3s ease-in-out infinite;
+        }
+        
+        @keyframes borderGlow {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 0.6; }
+        }
+        
+        .title {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, 
+                #667eea 0%, 
+                #764ba2 25%, 
+                #f093fb 50%, 
+                #f5576c 75%, 
+                #4facfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 300% 300%;
+            animation: gradientShift 4s ease infinite;
+            text-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .form-grid {
+            display: grid;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            color: white;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 8px 32px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .input-field::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .button-container {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin: 32px 0;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-3px) scale(1.02);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.1) 100%);
+            box-shadow: 0 12px 40px rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+        
+        .result-container {
+            background: linear-gradient(135deg, 
+                rgba(16, 185, 129, 0.1) 0%, 
+                rgba(5, 150, 105, 0.1) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 20px;
+            padding: 28px;
+            text-align: center;
+            margin-top: 24px;
+            backdrop-filter: blur(10px);
+            animation: resultSlide 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .result-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        @keyframes resultSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .result-label {
+            color: #34d399;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            font-weight: 400;
+        }
+        
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 6s infinite linear;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .calculator-card {
+                padding: 24px;
+                margin: 10px;
+                border-radius: 20px;
+            }
+            
+            .title {
+                font-size: 2rem;
+                margin-bottom: 32px;
+            }
+            
+            .button-container {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .btn {
+                width: 100%;
+                padding: 14px 24px;
+            }
+            
+            .form-grid {
+                gap: 20px;
+            }
+        }
+        
+        /* Glow effects */
+        .glow-1 {
+            position: absolute;
+            top: 10%;
+            right: 10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        .glow-2 {
+            position: absolute;
+            bottom: 10%;
+            left: 10%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: pulse 6s ease-in-out infinite reverse;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.6; }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+    
+    <div class="container">
+        <div class="calculator-card">
+            <h1 class="title">Token Growth Calculator</h1>
+            
+            <div class="form-grid">
+                <div class="input-group">
+                    <label class="input-label" for="current-tokens">Current Tokens</label>
+                    <input type="text" class="input-field" id="current-tokens" value="0" placeholder="e.g., 1000 or 1K">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label" for="tpm">TPM (Tokens Per Minute)</label>
+                    <input type="text" class="input-field" id="tpm" value="0" placeholder="e.g., 100">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label" for="increase">Increase Per 15 Minutes</label>
+                    <input type="text" class="input-field" id="increase" value="0" placeholder="e.g., 50">
+                </div>
+                
+                <div class="input-group">
+                    <label class="input-label" for="target-tokens">Target Tokens (Goal)</label>
+                    <input type="text" class="input-field" id="target-tokens" value="0" placeholder="e.g., 10000 or 10K">
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button class="btn btn-primary" onclick="calculateTime()">Calculate Time</button>
+                <button class="btn btn-secondary" onclick="clearFields()">Clear All</button>
+            </div>
+            
+            <div id="result" style="display: none;"></div>
+            
+            <div class="creator-info" style="background: rgba(102, 126, 234, 0.08); border: 1px solid rgba(102, 126, 234, 0.2); border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                <p style="margin-bottom: 10px; color: rgba(255, 255, 255, 0.9);">🎮 Free tool for SPTS: Genesis players</p>
+                <a href="https://www.roblox.com/users/1104119355/profile" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600; transition: color 0.3s;" onmouseover="this.style.color='#4facfe'" onmouseout="this.style.color='#667eea'">Follow Josh on Roblox →</a>
+            </div>
+            
+            <div class="footer">
+                Rescripted by 41kuv, Josh • Calculate your token growth overtime (MADE FOR SPTS: GENESIS)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create floating particles
+        function createParticles() {
+            const particlesContainer = document.getElementById('particles');
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 6 + 's';
+                particle.style.animationDuration = (Math.random() * 3 + 3) + 's';
+                particlesContainer.appendChild(particle);
+            }
+        }
+        
+        // Parse number with commas and letter suffixes (K, M, B, T)
+        function parseNumber(str) {
+            if (!str) return 0;
+            let s = str.replace(/,/g, '').trim().toUpperCase();
+            const multipliers = { 'K': 1e3, 'M': 1e6, 'B': 1e9, 'T': 1e12, 'QA': 1e15, 'QI': 1e18, 'SX': 1e21 };
+            const lastChar = s[s.length - 1];
+            let multiplier = 1;
+
+            if (multipliers[lastChar]) {
+                multiplier = multipliers[lastChar];
+                s = s.slice(0, -1);
+            }
+
+            const num = parseFloat(s);
+            return isNaN(num) ? 0 : num * multiplier;
+        }
+
+        function calculateTime() {
+            const currentTokens = parseNumber(document.getElementById('current-tokens').value);
+            const baseTPM = parseNumber(document.getElementById('tpm').value);
+            const incrementPer15 = parseNumber(document.getElementById('increase').value);
+            const targetTokens = parseNumber(document.getElementById('target-tokens').value);
+
+            if (targetTokens <= currentTokens) {
+                showResult('🎉 You already have enough tokens!');
+                return;
+            }
+
+            if (baseTPM <= 0) {
+                showResult('⚠️ Please enter a valid TPM greater than 0');
+                return;
+            }
+
+            let accumulated = currentTokens;
+            let currentRate = baseTPM;
+            let totalMinutes = 0;
+            const intervalMinutes = 15;
+
+            while (accumulated < targetTokens) {
+                const tokensThisInterval = currentRate * intervalMinutes;
+                if (accumulated + tokensThisInterval >= targetTokens) {
+                    const remainingTokens = targetTokens - accumulated;
+                    const fractionMinutes = remainingTokens / currentRate;
+                    totalMinutes += fractionMinutes;
+                    accumulated = targetTokens;
+                    break;
+                } else {
+                    accumulated += tokensThisInterval;
+                    totalMinutes += intervalMinutes;
+                    currentRate += incrementPer15;
+                }
+            }
+
+            const totalSeconds = totalMinutes * 60;
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = Math.floor(totalSeconds % 60);
+
+            let timeString = '';
+            if (hours > 0) timeString += `${hours}h `;
+            if (minutes > 0) timeString += `${minutes}m `;
+            timeString += `${seconds}s`;
+
+            showResult(`⏱️ ${timeString}`);
+        }
+
+        function showResult(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = `
+                <div class="result-container">
+                    <div class="result-label">Time to Goal</div>
+                    <div class="result-value">${message}</div>
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+            resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function clearFields() {
+            document.getElementById('current-tokens').value = '0';
+            document.getElementById('tpm').value = '0';
+            document.getElementById('increase').value = '0';
+            document.getElementById('target-tokens').value = '0';
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // Add enter key support
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                calculateTime();
+            }
+        });
+
+        // Initialize particles on load
+        window.addEventListener('load', createParticles);
+    </script>
+</body>
+</html>
